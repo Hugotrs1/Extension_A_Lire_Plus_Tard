@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>À lire plus tard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="popup">
+  <header>
+    <img src="../icons/icon-32.png" alt="" width="20" height="20">
+    <h1>À lire plus tard</h1>
+    <button id="open-options" class="icon-button" title="Options">⚙️</button>
+  </header>
+
+  <section id="setup" hidden>
+    <p>Configure d'abord le webhook Discord où envoyer tes liens.</p>
+    <button id="setup-button" class="primary">Ouvrir les options</button>
+  </section>
+
+  <form id="form" hidden>
+    <label for="title">Titre</label>
+    <input id="title" type="text" maxlength="256" required>
+    <p id="url" class="muted url"></p>
+
+    <label for="note">Note <span class="muted">(facultatif)</span></label>
+    <textarea id="note" rows="3" placeholder="Pourquoi tu veux le lire, ce que tu cherches dedans…"></textarea>
+
+    <button id="send" type="submit" class="primary">Envoyer dans Discord <kbd>Ctrl+Entrée</kbd></button>
+    <p id="status" role="status"></p>
+  </form>
+
+  <section id="history-section" hidden>
+    <h2>Derniers envois</h2>
+    <ul id="history"></ul>
+  </section>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

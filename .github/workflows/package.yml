@@ -1,0 +1,24 @@
+name: Package
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Valider le manifest
+        run: python3 -c "import json; m = json.load(open('manifest.json')); print(m['name'], m['version'])"
+      - name: Vérifier la syntaxe JavaScript
+        run: for f in src/*.js; do cp "$f" /tmp/check.mjs && node --check /tmp/check.mjs && echo "OK $f"; done
+      - name: Créer l'archive
+        run: |
+          VERSION=$(python3 -c "import json; print(json.load(open('manifest.json'))['version'])")
+          zip -r "read-later-extension-$VERSION.zip" manifest.json src icons
+      - uses: actions/upload-artifact@v4
+        with:
+          name: read-later-extension
+          path: read-later-extension-*.zip

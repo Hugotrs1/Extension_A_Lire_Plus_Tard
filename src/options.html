@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Options — À lire plus tard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="options">
+  <main>
+    <header>
+      <img src="../icons/icon-48.png" alt="" width="36" height="36">
+      <h1>À lire plus tard → Discord</h1>
+    </header>
+
+    <form id="form">
+      <label for="webhook">URL du webhook Discord</label>
+      <input id="webhook" type="url" placeholder="https://discord.com/api/webhooks/…" autocomplete="off" required>
+      <p class="muted">
+        Dans Discord : paramètres du salon → <b>Intégrations</b> → <b>Webhooks</b> →
+        <b>Nouveau webhook</b> → <b>Copier l'URL du webhook</b>.
+        Garde cette URL secrète : n'importe qui la possédant peut écrire dans le salon.
+      </p>
+      <div class="buttons">
+        <button type="submit" class="primary">Enregistrer</button>
+        <button type="button" id="test">Envoyer un message de test</button>
+      </div>
+      <p id="status" role="status"></p>
+    </form>
+
+    <section>
+      <h2>Utilisation</h2>
+      <ul>
+        <li><b>Icône de l'extension</b> : envoie la page avec une note facultative.</li>
+        <li><b>Clic droit</b> sur une page ou un lien → « Lire plus tard ».</li>
+        <li><b>Raccourci</b> <kbd>Alt+Shift+S</kbd> : envoi direct, sans fenêtre
+          (modifiable dans <code>chrome://extensions/shortcuts</code>).</li>
+        <li>Si du texte est sélectionné, il est ajouté en citation dans le message.</li>
+      </ul>
+    </section>
+  </main>
+  <script type="module" src="options.js"></script>
+</body>
+</html>
