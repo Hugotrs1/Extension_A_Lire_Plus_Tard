@@ -5,7 +5,7 @@ Extension Chrome / Edge qui envoie une page web dans un salon Discord, pour la l
 ## Fonctionnalités
 
 - Envoi de la page en cours, avec une note facultative
-- Clic droit sur une page ou un lien → « Lire plus tard »
+- Clic droit dans une page web, ou sur un lien de la page → « Lire plus tard » (Chrome ne permet pas de l'ajouter au menu des onglets)
 - Raccourci `Alt+Shift+S`
 - Historique des derniers envois
 

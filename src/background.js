@@ -7,8 +7,10 @@ const MENU_SAVE_PAGE = "read-later-page";
 const MENU_SAVE_LINK = "read-later-link";
 const DEFAULT_TITLE = "À lire plus tard";
 
-// À l'installation (et à chaque mise à jour) : on crée les entrées du clic droit
-chrome.runtime.onInstalled.addListener((details) => {
+// À l'installation (et à chaque mise à jour) : on crée les entrées du clic droit.
+// Chrome ne permet de les afficher que dans le contenu des pages (pas sur les onglets ni la barre d'adresse).
+chrome.runtime.onInstalled.addListener(async (details) => {
+  await chrome.contextMenus.removeAll(); // évite les doublons si l'extension est rechargée
   chrome.contextMenus.create({ id: MENU_SAVE_PAGE, title: "Lire cette page plus tard", contexts: ["page", "selection"] });
   chrome.contextMenus.create({ id: MENU_SAVE_LINK, title: "Lire ce lien plus tard", contexts: ["link"] });
 
