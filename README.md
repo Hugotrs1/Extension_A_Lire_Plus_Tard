@@ -11,8 +11,9 @@ les liens, permet de les marquer comme lus avec ✅ et en ressort une sélection
 - **Popup** : titre modifiable, note facultative, envoi avec `Ctrl+Entrée`, historique des 5 derniers envois.
 - **Clic droit** sur une page ou un lien → « Lire plus tard ».
 - **Raccourci clavier** `Alt+Shift+S` : envoi direct sans ouvrir de fenêtre, avec ✓ sur l'icône en retour.
-- **Aperçu soigné** dans Discord : titre, site, résumé et image de la page,
+- **Aperçu soigné** dans Discord : titre, nom du site, résumé et image de la page (balises Open Graph),
   texte sélectionné ajouté en citation.
+- **Robuste** : nouvel essai automatique si Discord limite les envois, messages d'erreur clairs (affichés au survol de l'icône).
 - **Aucune dépendance** : du JavaScript simple, sans outil de compilation.
 
 ## Installation

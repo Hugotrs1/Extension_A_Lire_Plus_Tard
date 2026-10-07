@@ -1,39 +1,55 @@
-// Page d'options : enregistrer l'URL du webhook Discord.
+// Page d'options : enregistrer et tester l'URL du webhook Discord.
 
-import { getWebhook, isWebhook, sendToDiscord, setWebhook } from "./discord.js";
+import { buildMessage, getWebhookUrl, isValidWebhook, postToWebhook, setWebhookUrl } from "./discord.js";
 
-const input = document.getElementById("webhook");
-const status = document.getElementById("status");
+const webhookInput = document.getElementById("webhook");
+const statusText = document.getElementById("status");
 
-function showStatus(message, success) {
-  status.textContent = message;
-  status.className = success ? "success" : "error";
+function showStatus(message, kind = "") {
+  statusText.textContent = message;
+  statusText.className = kind;
 }
 
-async function save() {
-  if (!isWebhook(input.value)) {
-    showStatus("Ce n'est pas une URL de webhook Discord (https://discord.com/api/webhooks/…).", false);
-    return false;
+// Renvoie l'URL saisie si elle est valide, sinon affiche une erreur et renvoie null
+function readWebhookInput() {
+  const url = webhookInput.value.trim();
+  if (!isValidWebhook(url)) {
+    showStatus("Cette URL ne ressemble pas à un webhook Discord (https://discord.com/api/webhooks/…).", "error");
+    return null;
   }
-  await setWebhook(input.value);
-  return true;
+  return url;
 }
 
-document.getElementById("form").onsubmit = async (event) => {
+// Bouton « Enregistrer »
+document.getElementById("form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (await save()) showStatus("✓ Enregistré.", true);
-};
+  const url = readWebhookInput();
+  if (!url) return;
+  await setWebhookUrl(url);
+  showStatus("✓ Enregistré.", "success");
+});
 
-document.getElementById("test").onclick = async () => {
-  if (!(await save())) return;
+// Bouton « Envoyer un message de test » : n'ajoute rien à l'historique
+document.getElementById("test").addEventListener("click", async () => {
+  const url = readWebhookInput();
+  if (!url) return;
+  showStatus("Envoi du test…");
+
   try {
-    await sendToDiscord({ url: "https://github.com", title: "Test de l'extension", description: "Ça marche 🎉" });
-    showStatus("✓ Message de test envoyé dans Discord.", true);
+    const testMessage = buildMessage({
+      url: "https://github.com/",
+      title: "Test de l'extension « À lire plus tard »",
+      description: "Si tu vois ce message, la configuration fonctionne 🎉",
+    });
+    await postToWebhook(testMessage, url);
+    await setWebhookUrl(url);
+    showStatus("✓ Message de test envoyé et webhook enregistré.", "success");
   } catch (error) {
-    showStatus(error.message, false);
+    showStatus(error.message, "error");
   }
-};
+});
 
-getWebhook().then((url) => {
-  if (url) input.value = url;
+// Au chargement de la page : on affiche le webhook déjà enregistré
+getWebhookUrl().then((url) => {
+  if (url) webhookInput.value = url;
 });
