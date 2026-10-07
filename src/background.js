@@ -1,47 +1,39 @@
-// Service worker : menu clic droit, raccourci clavier et retour visuel sur l'icône.
+// Tourne en arrière-plan : menu du clic droit et raccourci clavier.
 
-import { getPageInfo, savePage } from "./discord.js";
+import { getPageInfo, sendToDiscord } from "./discord.js";
 
-const MENU_PAGE = "read-later-page";
-const MENU_LINK = "read-later-link";
-
-chrome.runtime.onInstalled.addListener(async ({ reason }) => {
-  chrome.contextMenus.create({ id: MENU_PAGE, title: "Lire cette page plus tard", contexts: ["page", "selection"] });
-  chrome.contextMenus.create({ id: MENU_LINK, title: "Lire ce lien plus tard", contexts: ["link"] });
-  if (reason === "install") chrome.runtime.openOptionsPage();
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  chrome.contextMenus.create({ id: "page", title: "Lire cette page plus tard", contexts: ["page", "selection"] });
+  chrome.contextMenus.create({ id: "link", title: "Lire ce lien plus tard", contexts: ["link"] });
+  if (reason === "install") chrome.runtime.openOptionsPage(); // pour configurer le webhook tout de suite
 });
 
-async function flashBadge(tabId, ok, error) {
-  await chrome.action.setBadgeBackgroundColor({ color: ok ? "#2e7d32" : "#c62828", tabId });
-  await chrome.action.setBadgeText({ text: ok ? "✓" : "!", tabId });
-  await chrome.action.setTitle({ title: ok ? "Envoyé !" : `Erreur : ${error}`, tabId });
-  setTimeout(() => {
-    chrome.action.setBadgeText({ text: "", tabId });
-    chrome.action.setTitle({ title: "À lire plus tard", tabId });
-  }, ok ? 2500 : 8000);
+// Affiche ✓ (ou !) sur l'icône de l'extension pendant quelques secondes
+function showBadge(success) {
+  chrome.action.setBadgeBackgroundColor({ color: success ? "#2e7d32" : "#c62828" });
+  chrome.action.setBadgeText({ text: success ? "✓" : "!" });
+  setTimeout(() => chrome.action.setBadgeText({ text: "" }), 3000);
 }
 
-async function saveWithFeedback(tab, info) {
+async function send(page) {
   try {
-    await savePage(info);
-    await flashBadge(tab.id, true);
+    await sendToDiscord(page);
+    showBadge(true);
   } catch (error) {
     console.error(error);
-    await flashBadge(tab.id, false, error.message);
+    showBadge(false);
   }
 }
 
-chrome.contextMenus.onClicked.addListener(async (clickInfo, tab) => {
-  if (clickInfo.menuItemId === MENU_LINK) {
-    const title = clickInfo.selectionText || clickInfo.linkUrl;
-    await saveWithFeedback(tab, { url: clickInfo.linkUrl, title, description: `Lien trouvé sur ${tab.title}` });
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId === "link") {
+    await send({ url: info.linkUrl, title: info.linkUrl, description: `Trouvé sur : ${tab.title}` });
   } else {
-    await saveWithFeedback(tab, await getPageInfo(tab));
+    await send(await getPageInfo(tab));
   }
 });
 
+// Raccourci Alt+Shift+S (défini dans manifest.json)
 chrome.commands.onCommand.addListener(async (command, tab) => {
-  if (command !== "save-page") return;
-  const activeTab = tab ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
-  if (activeTab) await saveWithFeedback(activeTab, await getPageInfo(activeTab));
+  if (command === "save-page") await send(await getPageInfo(tab));
 });

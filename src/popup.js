@@ -1,81 +1,65 @@
-import { getHistory, getPageInfo, getWebhookUrl, savePage } from "./discord.js";
+// Fenêtre qui s'ouvre au clic sur l'icône de l'extension.
 
-const $ = (id) => document.getElementById(id);
-let pageInfo = null;
+import { getPageInfo, getWebhook, sendToDiscord } from "./discord.js";
 
-function timeAgo(timestamp) {
-  const minutes = Math.round((Date.now() - timestamp) / 60000);
-  if (minutes < 1) return "à l'instant";
-  if (minutes < 60) return `il y a ${minutes} min`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `il y a ${hours} h`;
-  return `il y a ${Math.round(hours / 24)} j`;
+const form = document.getElementById("form");
+const titleInput = document.getElementById("title");
+const noteInput = document.getElementById("note");
+const status = document.getElementById("status");
+let page;
+
+async function showHistory() {
+  const { history = [] } = await chrome.storage.local.get("history");
+  const list = document.getElementById("history");
+  document.getElementById("history-section").hidden = history.length === 0;
+  list.innerHTML = "";
+  for (const item of history.slice(0, 5)) {
+    const link = document.createElement("a");
+    link.href = item.url;
+    link.target = "_blank";
+    link.textContent = item.title;
+    const li = document.createElement("li");
+    li.append(link);
+    list.append(li);
+  }
 }
 
-async function renderHistory() {
-  const history = (await getHistory()).slice(0, 5);
-  $("history-section").hidden = history.length === 0;
-  $("history").replaceChildren(
-    ...history.map((item) => {
-      const li = document.createElement("li");
-      const link = document.createElement("a");
-      link.href = item.url;
-      link.target = "_blank";
-      link.textContent = item.title;
-      const when = document.createElement("span");
-      when.className = "muted";
-      when.textContent = timeAgo(item.savedAt);
-      li.append(link, when);
-      return li;
-    }),
-  );
-}
+async function start() {
+  document.getElementById("open-options").onclick = () => chrome.runtime.openOptionsPage();
+  document.getElementById("setup-button").onclick = () => chrome.runtime.openOptionsPage();
+  showHistory();
 
-function setStatus(message, kind = "") {
-  $("status").textContent = message;
-  $("status").className = kind;
-}
-
-async function init() {
-  $("open-options").addEventListener("click", () => chrome.runtime.openOptionsPage());
-  $("setup-button").addEventListener("click", () => chrome.runtime.openOptionsPage());
-  renderHistory();
-
-  if (!(await getWebhookUrl())) {
-    $("setup").hidden = false;
+  if (!(await getWebhook())) {
+    document.getElementById("setup").hidden = false; // pas encore configuré
     return;
   }
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  pageInfo = await getPageInfo(tab);
-  $("form").hidden = false;
-  $("title").value = pageInfo.title;
-  $("url").textContent = pageInfo.url;
-  $("note").focus();
-
-  if (!/^https?:\/\//.test(pageInfo.url)) {
-    $("send").disabled = true;
-    setStatus("Cette page ne peut pas être envoyée (page interne du navigateur).", "error");
-  }
+  page = await getPageInfo(tab);
+  form.hidden = false;
+  titleInput.value = page.title;
+  document.getElementById("url").textContent = page.url;
+  noteInput.focus();
 }
 
-$("form").addEventListener("submit", async (event) => {
+form.onsubmit = async (event) => {
   event.preventDefault();
-  $("send").disabled = true;
-  setStatus("Envoi…");
+  status.textContent = "Envoi…";
+  status.className = "";
   try {
-    await savePage({ ...pageInfo, title: $("title").value.trim() || pageInfo.title }, $("note").value);
-    setStatus("✓ Envoyé ! Bonne lecture plus tard.", "success");
-    await renderHistory();
-    setTimeout(() => window.close(), 900);
+    await sendToDiscord({ ...page, title: titleInput.value }, noteInput.value.trim());
+    status.textContent = "✓ Envoyé !";
+    status.className = "success";
+    setTimeout(() => window.close(), 800);
   } catch (error) {
-    setStatus(error.message, "error");
-    $("send").disabled = false;
+    status.textContent = error.message;
+    status.className = "error";
   }
-});
+};
 
-$("note").addEventListener("keydown", (event) => {
-  if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) $("form").requestSubmit();
-});
+// Ctrl+Entrée dans la note = envoyer
+noteInput.onkeydown = (event) => {
+  if (event.key === "Enter" && event.ctrlKey) form.requestSubmit();
+};
 
-init();
+start();
